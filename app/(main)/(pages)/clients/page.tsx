@@ -1,9 +1,13 @@
 "use client"
 
 import { useState } from 'react'
-import { Search, Plus, Filter, Download, MoreVertical, MoreVerticalIcon } from 'lucide-react'
+import { Search, Plus, Filter, Download, MoreVertical, MoreVerticalIcon, SearchIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { StatCard } from '@/components/global/stat-card'
 
 export default function ClientsPage() {
     const [clients, setClients] = useState([
@@ -13,47 +17,32 @@ export default function ClientsPage() {
     ])
 
     return (
-        <div className="p-6">
-            <div className="flex flex-col gap-4 relative">
-                <h1 className="text-4xl sticky top-0 z-[10] p-6 bg-background/50 backdrop-blur-lg flex items-center border-b">
+        <div>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-2xl font-bold">
                     Clients
                 </h1>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-lg font-semibold mb-2">Total Clients</h2>
-                    <p className="text-3xl font-bold">24</p>
-                    <p className="text-sm text-green-500">↑ 8.1% Last month</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-lg font-semibold mb-2">Active Projects</h2>
-                    <p className="text-3xl font-bold">18</p>
-                    <p className="text-sm text-green-500">↑ 12.3% Last month</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-lg font-semibold mb-2">Total Billed</h2>
-                    <p className="text-3xl font-bold">$156,000</p>
-                    <p className="text-sm text-red-500">↓ 3.2% Last month</p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <StatCard title="Total Clients" value="24" change={8.1} isPositive={true} color="#10B981" />
+                <StatCard title="Active Projects" value="18" change={12.3} isPositive={true} color="#F59E0B" />
+                <StatCard title="Total Billed" value="$156,000" change={3.2} isPositive={false} color="#EF4444" />
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-lg font-semibold">Clients List</h2>
-                    <div className="flex items-center space-x-2">
-                        <button className="flex items-center px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                            <Plus size={16} className="mr-1" />
-                            Add Client
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-gray-700">
-                            <Filter size={20} />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-gray-700">
-                            <Download size={20} />
-                        </button>
+            <Card className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold">Clients List</h2>
+                    <div className="flex items-center space-x-4">
+                        <div className="relative">
+                            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <Input className="pl-10" placeholder="Search" />
+                        </div>
+                        <Button variant="outline">Filters</Button>
+                        <Button variant="outline">Export</Button>
                     </div>
                 </div>
+
 
                 <Table>
                     <TableHeader>
@@ -73,7 +62,6 @@ export default function ClientsPage() {
                                 <TableCell>
                                     <div className="flex items-center space-x-2">
                                         {client.name}
-                                        <span>{client.name}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell>{client.email}</TableCell>
@@ -85,15 +73,70 @@ export default function ClientsPage() {
                                 <TableCell>{client.projects}</TableCell>
                                 <TableCell>{client.totalBilled}</TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="icon">
-                                        <MoreVerticalIcon className="h-4 w-4" />
-                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreVerticalIcon className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-56">
+                                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem>
+                                                    Profile
+                                                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Billing
+                                                    <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Settings
+                                                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Keyboard shortcuts
+                                                    <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem>Team</DropdownMenuItem>
+                                                <DropdownMenuSub>
+                                                    <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
+                                                    <DropdownMenuPortal>
+                                                        <DropdownMenuSubContent>
+                                                            <DropdownMenuItem>Email</DropdownMenuItem>
+                                                            <DropdownMenuItem>Message</DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem>More...</DropdownMenuItem>
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuPortal>
+                                                </DropdownMenuSub>
+                                                <DropdownMenuItem>
+                                                    New Team
+                                                    <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem>GitHub</DropdownMenuItem>
+                                            <DropdownMenuItem>Support</DropdownMenuItem>
+                                            <DropdownMenuItem disabled>API</DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem>
+                                                Log out
+                                                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-            </div>
+            </Card>
+
         </div>
     )
 }

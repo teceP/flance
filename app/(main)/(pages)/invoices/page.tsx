@@ -4,11 +4,13 @@ import { NewInvoiceSheet } from "@/components/forms/new-invoice-sheet"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { StatCard } from "@/components/global/stat-card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useModal } from "@/providers/modal-provider"
 import { ArrowUpIcon, ArrowDownIcon, MoreVerticalIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { SiSpotify, SiFigma, SiSlack, SiPatreon, SiEvernote, SiMailchimp } from "react-icons/si"  // Importiere die SimpleIcons
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 const invoiceData = [
     { id: "# 001", company: "Spotify", logo: <SiSpotify className="w-6 h-6 text-green-500" />, dueDate: "12/06/2023", email: "finance@spotify.com", status: "Pending", amount: "$14,000" },
@@ -36,7 +38,7 @@ export default function InvoiceDashboard() {
     };
 
     return (
-        <div className="p-8 bg-gray-100 min-h-screen">
+        <div>
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Bill & Invoice</h1>
                 <NewInvoiceSheet onCreateInvoice={handleCreateInvoice} />
@@ -92,9 +94,63 @@ export default function InvoiceDashboard() {
                                 </TableCell>
                                 <TableCell>{invoice.amount}</TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="icon">
-                                        <MoreVerticalIcon className="h-4 w-4" />
-                                    </Button>
+                                <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreVerticalIcon className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-56">
+                                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem>
+                                                    Profile
+                                                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Billing
+                                                    <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Settings
+                                                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Keyboard shortcuts
+                                                    <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem>Team</DropdownMenuItem>
+                                                <DropdownMenuSub>
+                                                    <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
+                                                    <DropdownMenuPortal>
+                                                        <DropdownMenuSubContent>
+                                                            <DropdownMenuItem>Email</DropdownMenuItem>
+                                                            <DropdownMenuItem>Message</DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem>More...</DropdownMenuItem>
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuPortal>
+                                                </DropdownMenuSub>
+                                                <DropdownMenuItem>
+                                                    New Team
+                                                    <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem>GitHub</DropdownMenuItem>
+                                            <DropdownMenuItem>Support</DropdownMenuItem>
+                                            <DropdownMenuItem disabled>API</DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem>
+                                                Log out
+                                                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -110,50 +166,6 @@ export default function InvoiceDashboard() {
                 </div>
             </Card>
         </div>
-    )
-}
-
-interface StatCardProps {
-    title: string;
-    value: number | string;
-    change: number;
-    isPositive: boolean;
-    color?: string; // Optionaler color-Parameter
-}
-
-function StatCard({ title, value, change, isPositive, color }: Readonly<StatCardProps>) {
-    // Generate random data for the graph
-    const graphData = Array.from({ length: 10 }, () => Math.floor(Math.random() * 50) + 50);
-
-    // Calculate the SVG path for the graph
-    const pathData = graphData.reduce((path, point, index) => {
-        return path + (index === 0 ? `M ${index * 20},${100 - point} ` : `L ${index * 20},${100 - point} `);
-    }, '');
-
-    return (
-        <Card className="p-6">
-            <div className="flex justify-between items-start mb-4">
-                <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-                <Button variant="ghost" size="icon">
-                    <MoreVerticalIcon className="h-4 w-4" />
-                </Button>
-            </div>
-            <div className="text-3xl font-bold mb-2">{value}</div>
-            <div className={`flex items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'} mb-4`}>
-                {isPositive ? <ArrowUpIcon className="h-4 w-4 mr-1" /> : <ArrowDownIcon className="h-4 w-4 mr-1" />}
-                {change}% Last month
-            </div>
-            <div className="w-full h-16">
-                <svg width="100%" height="100%" viewBox="0 0 200 100" preserveAspectRatio="none">
-                    <path
-                        d={pathData}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth="2"
-                    />
-                </svg>
-            </div>
-        </Card>
     )
 }
 
