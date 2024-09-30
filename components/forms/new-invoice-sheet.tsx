@@ -95,17 +95,19 @@ export function NewInvoiceSheet({ onCreateInvoice }: NewInvoiceSheetProps) {
         <SheetHeader >
           <SheetTitle>New Invoice</SheetTitle>
         </SheetHeader>
+        
         <div className="flex-1 overflow-auto space-y-6">
           {/* Logo and Invoice Number */}
           <div className="flex space-x-4">
             <div className="flex-1">
               <Label htmlFor="logo">Logo</Label>
+              <div className="mt-1">
               <Select onValueChange={(value) => {
                 const selected = logoOptions.find(option => option.icon === value)
                 setSelectedLogo(selected || null)
               }}
                 value={selectedLogo?.icon || ''}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="Select Logo" />
                 </SelectTrigger>
                 <SelectContent className="w-full" position='popper'>
@@ -119,6 +121,7 @@ export function NewInvoiceSheet({ onCreateInvoice }: NewInvoiceSheetProps) {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </div>
             <div className="flex-1">
               <Label htmlFor="invoiceNumber">Invoice Number</Label>
@@ -214,7 +217,6 @@ export function NewInvoiceSheet({ onCreateInvoice }: NewInvoiceSheetProps) {
             </div>
           </Card>
 
-
           {/* Totals */}
           <div className="flex justify-between items-start space-x-4">
             <div className="flex-1">
@@ -226,7 +228,6 @@ export function NewInvoiceSheet({ onCreateInvoice }: NewInvoiceSheetProps) {
                   value={issueDate}
                   onChange={(e) => setIssueDate(e.target.value)}
                 />
-
             </div>
  
             <div className="flex-1 space-y-2 text-right">
@@ -249,7 +250,10 @@ export function NewInvoiceSheet({ onCreateInvoice }: NewInvoiceSheetProps) {
             </div>
           </div>
         </div>
-        <SheetFooter >
+        <SheetFooter>
+        <div className="flex flex-col">
+          
+        </div>
           <SheetClose asChild>
             <Button type="submit" className="w-full" onClick={handleCreateInvoice}>
               Confirm
