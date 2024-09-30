@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useModal } from "@/providers/modal-provider"
 import { ArrowUpIcon, ArrowDownIcon, MoreVerticalIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { SiSpotify, SiFigma, SiSlack, SiPatreon, SiEvernote, SiMailchimp } from "react-icons/si"  // Importiere die SimpleIcons
@@ -22,6 +23,7 @@ const invoiceData = [
 export default function InvoiceDashboard() {
     const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false)
     const [sheetOpen, setSheetOpen] = useState(false);
+    const {setOpen, setClose} = useModal();
 
     const handleClose = () => {
         // Logik zum Schließen des Modals
@@ -30,13 +32,14 @@ export default function InvoiceDashboard() {
     const handleCreateInvoice = (invoiceData: any) => {
         console.log('Invoice created:', invoiceData);
         // Hier kannst du den Code zur Verarbeitung der Rechnung hinzufügen
+        setClose();
     };
 
     return (
         <div className="p-8 bg-gray-100 min-h-screen">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Bill & Invoice</h1>
-                <Button onClick={() => setSheetOpen(true)} className="bg-red-500 hover:bg-red-600 text-white">New Invoice</Button>
+                <NewInvoiceSheet onCreateInvoice={handleCreateInvoice} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -106,12 +109,6 @@ export default function InvoiceDashboard() {
                     </div>
                 </div>
             </Card>
-
-            <NewInvoiceSheet
-                sheetOpen={sheetOpen}
-                setSheetOpen={setSheetOpen}
-                onCreateInvoice={handleCreateInvoice}
-            />
         </div>
     )
 }
