@@ -1,8 +1,8 @@
 'use client'
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react'
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command'
+import { Search } from 'lucide-react';
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { Button } from '../ui/button';
 
 const InfoBar = () => {
@@ -25,7 +25,7 @@ const InfoBar = () => {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 border-b">
+    <header className="flex items-center justify-between p-4 border-b fixed top-0 left-16 right-0 bg-white shadow z-10">
       <div className="flex-1 flex justify-center">
         <div className="relative">
           <input
@@ -38,7 +38,6 @@ const InfoBar = () => {
         </div>
       </div>
       <div>
-
         <CommandDialog open={open} onOpenChange={setOpen}>
           <CommandInput placeholder="Type a command or search..." />
           <CommandList>

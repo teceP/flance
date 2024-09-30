@@ -6,11 +6,11 @@ type Props = { children: React.ReactNode }
 
 const Layout = (props: Props) => {
   return (
-    <div className="flex overflow-hidden h-screen">
+    <div className="flex h-screen">
       <Sidebar />
-      <div className="w-full">
+      <div className="ml-16 w-full h-full">
         <InfoBar />
-        {props.children}
+        {props.children}          
       </div>
     </div>
   )

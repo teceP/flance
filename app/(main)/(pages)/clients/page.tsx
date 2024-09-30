@@ -8,6 +8,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { StatCard } from '@/components/global/stat-card'
+import { StaticDropdownMenu } from '@/components/global/static-dropdown-menu'
+import { NewInvoiceSheet } from '@/components/forms/new-invoice-sheet'
+import { NewClientSheet } from '@/components/forms/new-client-sheet'
 
 export default function ClientsPage() {
     const [clients, setClients] = useState([
@@ -22,6 +25,8 @@ export default function ClientsPage() {
                 <h1 className="text-2xl font-bold">
                     Clients
                 </h1>
+                <NewClientSheet onCreateClient={() =>{}} />
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -73,68 +78,19 @@ export default function ClientsPage() {
                                 <TableCell>{client.projects}</TableCell>
                                 <TableCell>{client.totalBilled}</TableCell>
                                 <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
-                                                <MoreVerticalIcon className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-56">
-                                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuGroup>
-                                                <DropdownMenuItem>
-                                                    Profile
-                                                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Billing
-                                                    <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Settings
-                                                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Keyboard shortcuts
-                                                    <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuGroup>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuGroup>
-                                                <DropdownMenuItem>Team</DropdownMenuItem>
-                                                <DropdownMenuSub>
-                                                    <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
-                                                    <DropdownMenuPortal>
-                                                        <DropdownMenuSubContent>
-                                                            <DropdownMenuItem>Email</DropdownMenuItem>
-                                                            <DropdownMenuItem>Message</DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem>More...</DropdownMenuItem>
-                                                        </DropdownMenuSubContent>
-                                                    </DropdownMenuPortal>
-                                                </DropdownMenuSub>
-                                                <DropdownMenuItem>
-                                                    New Team
-                                                    <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuGroup>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem>GitHub</DropdownMenuItem>
-                                            <DropdownMenuItem>Support</DropdownMenuItem>
-                                            <DropdownMenuItem disabled>API</DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem>
-                                                Log out
-                                                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <StaticDropdownMenu/>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
+                <div className="flex justify-between items-center mt-6">
+                    <span className="text-sm text-gray-500">Page 1 of 10</span>
+                    <div className="space-x-2">
+                        <Button variant="outline" size="sm">Previous</Button>
+                        <Button variant="outline" size="sm">Next</Button>
+                    </div>
+                </div>
             </Card>
 
         </div>

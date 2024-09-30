@@ -99,3 +99,26 @@ body {
 /* For Firefox */
 scrollbar-width: thin; /* For Firefox */
 scrollbar-color: #888 #f1f1f1; /* Handle and track colors for Firefox */
+
+@media (max-width: 768px) {
+  /* Zusätzliche Anpassungen für kleine Bildschirme */
+  .stat-card {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+}
+
+/* Make sure the parent container of the chart has a flexible layout */
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;  /* Ensure full width */
+  height: 100%; /* Allow height to be controlled */
+}
+
+/* Optional: Ensure responsive behavior for Card */
+.card {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Allow it to grow and shrink */
+}

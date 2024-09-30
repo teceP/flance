@@ -89,7 +89,7 @@ export function NewInvoiceSheet({ onCreateInvoice }: NewInvoiceSheetProps) {
   return (
     <Sheet modal={true} >
       <SheetTrigger asChild>
-        <Button variant="outline" className="bg-red-500 hover:bg-red-600 text-white ">Create Invoice</Button>
+        <Button variant="outline" className="bg-red-500 hover:bg-red-600 text-white">Create Invoice</Button>
       </SheetTrigger>
       <SheetContent style={{ maxWidth: '40vw' }} side="right" className="flex flex-col h-scree">
         <SheetHeader >
