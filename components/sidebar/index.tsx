@@ -36,7 +36,7 @@ const MenuOptions = (props: Props) => {
                   <div
                     onMouseEnter={() => setHoveredItem(item.label)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    className={`p-2 rounded-md hover:bg-gray-800 ${pathname === item.href ? 'bg-gray-800' : ''}`}>
+                    className={`p-2 rounded-md hover:bg-gray-800 ${pathname.startsWith(item.href) ? 'bg-gray-800' : ''}`}>
                     <Icon className="w-6 h-6" />
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}

@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import * as React from 'react';
 
-const AnalyticsPage = () => {
+const GenPage = () => {
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
@@ -19,4 +19,4 @@ const AnalyticsPage = () => {
     )
 }
 
-export default AnalyticsPage;
+export default GenPage;

@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/global/stat-card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useModal } from "@/providers/modal-provider"
-import { ArrowUpIcon, ArrowDownIcon, MoreVerticalIcon, SearchIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { SiSpotify, SiFigma, SiSlack, SiPatreon, SiEvernote, SiMailchimp } from "react-icons/si"  // Importiere die SimpleIcons
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { StaticDropdownMenu } from "@/components/global/static-dropdown-menu"
+import PocketBase from 'pocketbase';
+import NInvoiceForm from "@/components/forms/n-invoice-form"
 
 const invoiceData = [
     { id: "# 001", company: "Spotify", logo: <SiSpotify className="w-6 h-6 text-green-500" />, dueDate: "12/06/2023", email: "finance@spotify.com", status: "Pending", amount: "$14,000" },
@@ -32,9 +33,19 @@ export default function InvoiceDashboard() {
         // Logik zum Schließen des Modals
     };
 
-    const handleCreateInvoice = (invoiceData: any) => {
+    const handleCreateInvoice = async (invoiceData: any) => {
+
+        try{
+            const pb = new PocketBase("http://127.0.0.1:8090")
+            
+            const response = await pb.collection('invoices').create(invoiceData);
+            console.log(response)
+
+        }catch (ex) {
+            console.log(ex)
+        }
         console.log('Invoice created:', invoiceData);
-        // Hier kannst du den Code zur Verarbeitung der Rechnung hinzufügen
+
         setClose();
     };
 
@@ -42,6 +53,7 @@ export default function InvoiceDashboard() {
         <div>
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Bill & Invoice</h1>
+                <NInvoiceForm />
                 <NewInvoiceSheet onCreateInvoice={handleCreateInvoice} />
             </div>
 
