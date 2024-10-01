@@ -122,3 +122,15 @@ scrollbar-color: #888 #f1f1f1; /* Handle and track colors for Firefox */
   flex-direction: column;
   flex-grow: 1; /* Allow it to grow and shrink */
 }
+
+@media (max-width: 768px) {
+  .sheet-content {
+    max-width: 90vw;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sheet-content {
+    max-width: 70vw;
+  }
+}
