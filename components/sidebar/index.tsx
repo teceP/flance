@@ -88,7 +88,7 @@ const MenuOptions = (props: Props) => {
               setHoveredItem("Settings")
             }}
             onMouseLeave={() => setHoveredItem(null)}
-            className={`p-2 rounded-md hover:bg-gray-800 ${pathname === "/settings" ? 'bg-gray-800' : ''}`}>
+            className={`p-2 rounded-md hover:bg-gray-800 ${pathname.startsWith("/settings") ? 'bg-gray-800' : ''}`}>
             <Settings className="w-6 h-6" />
             <motion.div
               initial={{ opacity: 0, x: -10 }}
