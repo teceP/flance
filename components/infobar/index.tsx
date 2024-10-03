@@ -19,11 +19,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { createBrowserClient } from '@/lib/pocketbase';
+import { useRouter } from 'next/navigation';
 
 const InfoBar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const pb = createBrowserClient(); // For browser client
 
   const handleSearchClick = () => {
     setIsSearchOpen(true);
@@ -37,6 +41,12 @@ const InfoBar = () => {
     if (e.target === e.currentTarget) {
       handleSearchClose(); // Close when clicking the background
     }
+  };
+
+  // Logout function
+  const handleLogout = async () => {
+    pb.authStore.clear(); // Clear auth state
+    router.push('/signin'); // Redirect to login page
   };
 
   return (
@@ -104,35 +114,61 @@ const InfoBar = () => {
           </CommandList>
         </CommandDialog>
       </div>
+      <div>
+        <MenubarMenu>
+          <MenubarTrigger className="hidden md:block">Account</MenubarTrigger>
+          <MenubarContent forceMount>
+            <MenubarLabel inset>Switch Account</MenubarLabel>
+            <MenubarSeparator />
+            <MenubarRadioGroup value="benoit">
+              <MenubarRadioItem value="andy">Andy</MenubarRadioItem>
+              <MenubarRadioItem value="benoit">Benoit</MenubarRadioItem>
+              <MenubarRadioItem value="Luis">Luis</MenubarRadioItem>
+            </MenubarRadioGroup>
+            <MenubarSeparator />
+            <MenubarItem inset>Manage Family...</MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem inset>Add Account...</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+      </Menubar>
+    </div>
+    
+      {/* Logout Button */ }
+  <Button onClick={handleLogout} className="ml-4">
+    Logout
+  </Button>
 
-      {isSearchOpen && (
-        <div
-          onClick={handleBackdropClick}
-          className={`fixed inset-0 z-50 flex items-center justify-center 
+  {
+    isSearchOpen && (
+      <div
+        onClick={handleBackdropClick}
+        className={`fixed inset-0 z-50 flex items-center justify-center 
             transition-all duration-500 ease-in-out 
             ${isSearchOpen ? 'opacity-100 backdrop-blur-lg' : 'opacity-0 backdrop-blur-none'}
             bg-black bg-opacity-20`}
-        >
-          <div className="relative bg-white p-6 rounded-md shadow-lg max-w-lg w-full transition-all duration-500 ease-out">
-            {/* Expanded Search Input */}
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full text-lg p-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-600"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {/* Close button */}
-            <button
-              className="absolute top-4 right-4 p-2 text-gray-600 focus:outline-none"
-              onClick={handleSearchClose}
-            >
-              {/* Close icon can go here */}
-            </button>
-          </div>
+      >
+        <div className="relative bg-white p-6 rounded-md shadow-lg max-w-lg w-full transition-all duration-500 ease-out">
+          {/* Expanded Search Input */}
+          <Input
+            type="search"
+            placeholder="Search..."
+            className="w-full text-lg p-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-600"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 p-2 text-gray-600 focus:outline-none"
+            onClick={handleSearchClose}
+          >
+            {/* Close icon can go here */}
+          </button>
         </div>
-      )}
-    </header>
+      </div>
+    )
+  }
+    </header >
   );
 };
 
