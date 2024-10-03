@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { createBrowserClient } from '@/lib/pocketbase';
 import { useRouter } from 'next/navigation';
+import { Menubar, MenubarContent, MenubarItem, MenubarLabel, MenubarMenu, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator, MenubarTrigger } from '../ui/menubar';
 
 const InfoBar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -48,6 +49,14 @@ const InfoBar = () => {
     pb.authStore.clear(); // Clear auth state
     router.push('/signin'); // Redirect to login page
   };
+
+  const getEmail = async () => {
+    if (pb.authStore.model) {
+      return pb.authStore.model.email;
+  } else {
+      return "no email found"
+  }
+  }
 
   return (
     <header className="flex items-center justify-between p-4 border-b fixed top-0 left-16 right-0 bg-white shadow z-10">
@@ -115,10 +124,11 @@ const InfoBar = () => {
         </CommandDialog>
       </div>
       <div>
+        <Menubar>
         <MenubarMenu>
           <MenubarTrigger className="hidden md:block">Account</MenubarTrigger>
           <MenubarContent forceMount>
-            <MenubarLabel inset>Switch Account</MenubarLabel>
+            <MenubarLabel inset>{getEmail()}</MenubarLabel>
             <MenubarSeparator />
             <MenubarRadioGroup value="benoit">
               <MenubarRadioItem value="andy">Andy</MenubarRadioItem>
@@ -128,16 +138,11 @@ const InfoBar = () => {
             <MenubarSeparator />
             <MenubarItem inset>Manage Family...</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem inset>Add Account...</MenubarItem>
+            <MenubarItem onClick={handleLogout} inset>Logout</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
     </div>
-    
-      {/* Logout Button */ }
-  <Button onClick={handleLogout} className="ml-4">
-    Logout
-  </Button>
 
   {
     isSearchOpen && (
