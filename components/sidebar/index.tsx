@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React, { useState } from 'react'
-import { LayoutGrid, Users, FileText, Clock, BarChart3, User, Settings } from 'lucide-react'
+import { LayoutGrid, Users, FileText, Clock, BarChart3, User, Settings, FilePlus2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import path from 'path'
 
@@ -11,6 +11,7 @@ type Props = {}
 
 const navItems = [
   { icon: LayoutGrid, href: '/dashboard', label: 'Dashboard' },
+  { icon: FilePlus2, href: '/create', label: 'Create' },
   { icon: FileText, href: '/invoices', label: 'Invoices' },
   { icon: Users, href: '/clients', label: 'Clients' },
   { icon: Clock, href: '/history', label: 'History' },
