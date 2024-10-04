@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ArrowUpRight, DollarSign, Users, FileText, Bell } from 'lucide-react'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { StatCard } from '@/components/global/stat-card'
+import PricingPage from '../pricing/page'
 
 // New CurrentTime component
 const CurrentTime = () => {
@@ -89,6 +90,8 @@ export default function DashboardPage() {
           <CurrentTime />
         </div>
       </motion.div>
+
+      <PricingPage />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard title="Total Revenue" value="$12,345" change={15} isPositive={true} color="#10B981" />

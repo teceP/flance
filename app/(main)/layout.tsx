@@ -9,7 +9,7 @@ const Layout = (props: Props) => {
     <div className="flex h-screen">
       <Sidebar />
       <div className="ml-16 w-full h-full">
-        <InfoBar />
+         <InfoBar />
         {props.children}          
       </div>
     </div>

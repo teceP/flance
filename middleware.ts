@@ -7,7 +7,6 @@ import { createServerClient } from "@/lib/pocketbase";
 // If auth is not valid for matching routes
 // Redirect to a redirect path
 export function middleware(request: NextRequest) {
-  console.log("x")
   const redirect_path = "https://localhost:3000/signin";
 
   const cookieStore = cookies();

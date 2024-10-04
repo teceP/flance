@@ -6,11 +6,8 @@ import type PocketBase from 'pocketbase'
 import type { RecordService } from 'pocketbase'
 
 export enum Collections {
-	Base = "base",
-	CustomAuth = "custom_auth",
-	Everything = "everything",
-	MyView = "my_view",
-	Posts = "posts",
+	Invoices = "invoices",
+	Subscriptions = "subscriptions",
 	Users = "users",
 }
 
@@ -38,84 +35,60 @@ export type AuthSystemFields<T = never> = {
 
 // Record types for each collection
 
-export type BaseRecord = {
-	field?: string
+export type InvoicesRecord<Titems = unknown> = {
+	clientAddress?: string
+	clientName?: string
+	companyAddress?: string
+	companyName?: string
+	date?: IsoDateString
+	dueDate?: IsoDateString
+	invoiceNumber?: string
+	items?: null | Titems
+	subtotal?: number
+	tax?: number
+	total?: number
 }
 
-export type CustomAuthRecord = {
-	custom_field?: string
+export enum SubscriptionsIntervalOptions {
+	"monthly" = "monthly",
+	"yearly" = "yearly",
 }
-
-export enum EverythingSelectFieldOptions {
-	"optionA" = "optionA",
-	"OptionA" = "OptionA",
-	"optionB" = "optionB",
-	"optionC" = "optionC",
-	"option with space" = "option with space",
-	"sy?mb@!$" = "sy?mb@!$",
-}
-export type EverythingRecord<Tanother_json_field = unknown, Tjson_field = unknown> = {
-	another_json_field?: null | Tanother_json_field
-	bool_field?: boolean
-	custom_relation_field?: RecordIdString[]
-	date_field?: IsoDateString
-	email_field?: string
-	file_field?: string
-	json_field?: null | Tjson_field
-	number_field?: number
-	post_relation_field?: RecordIdString
-	rich_editor_field?: HTMLString
-	select_field?: EverythingSelectFieldOptions
-	select_field_no_values?: string
-	text_field?: string
-	three_files_field?: string[]
-	url_field?: string
-	user_relation_field?: RecordIdString
-}
-
-export type MyViewRecord<Tjson_field = unknown> = {
-	json_field?: null | Tjson_field
-	post_relation_field?: RecordIdString
-	text_field?: string
-}
-
-export type PostsRecord = {
-	field1?: number
-	field?: string
-	nonempty_bool: boolean
-	nonempty_field: string
+export type SubscriptionsRecord = {
+	amount?: number
+	end_date?: IsoDateString
+	interval?: SubscriptionsIntervalOptions
+	next_billing_date?: IsoDateString
+	plan_id?: string
+	provider?: string
+	start_date?: IsoDateString
+	status?: string
+	user_id?: RecordIdString
 }
 
 export type UsersRecord = {
 	avatar?: string
+	mollie_customer_id?: string
 	name?: string
+	paypal_customer_id?: string
+	stripe_customer_id?: string
 }
 
 // Response types include system fields and match responses from the PocketBase API
-export type BaseResponse<Texpand = unknown> = Required<BaseRecord> & BaseSystemFields<Texpand>
-export type CustomAuthResponse<Texpand = unknown> = Required<CustomAuthRecord> & AuthSystemFields<Texpand>
-export type EverythingResponse<Tanother_json_field = unknown, Tjson_field = unknown, Texpand = unknown> = Required<EverythingRecord<Tanother_json_field, Tjson_field>> & BaseSystemFields<Texpand>
-export type MyViewResponse<Tjson_field = unknown, Texpand = unknown> = Required<MyViewRecord<Tjson_field>> & BaseSystemFields<Texpand>
-export type PostsResponse<Texpand = unknown> = Required<PostsRecord> & BaseSystemFields<Texpand>
+export type InvoicesResponse<Titems = unknown, Texpand = unknown> = Required<InvoicesRecord<Titems>> & BaseSystemFields<Texpand>
+export type SubscriptionsResponse<Texpand = unknown> = Required<SubscriptionsRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
-	base: BaseRecord
-	custom_auth: CustomAuthRecord
-	everything: EverythingRecord
-	my_view: MyViewRecord
-	posts: PostsRecord
+	invoices: InvoicesRecord
+	subscriptions: SubscriptionsRecord
 	users: UsersRecord
 }
 
 export type CollectionResponses = {
-	base: BaseResponse
-	custom_auth: CustomAuthResponse
-	everything: EverythingResponse
-	my_view: MyViewResponse
-	posts: PostsResponse
+	invoices: InvoicesResponse
+	subscriptions: SubscriptionsResponse
 	users: UsersResponse
 }
 
@@ -123,10 +96,7 @@ export type CollectionResponses = {
 // https://github.com/pocketbase/js-sdk#specify-typescript-definitions
 
 export type TypedPocketBase = PocketBase & {
-	collection(idOrName: 'base'): RecordService<BaseResponse>
-	collection(idOrName: 'custom_auth'): RecordService<CustomAuthResponse>
-	collection(idOrName: 'everything'): RecordService<EverythingResponse>
-	collection(idOrName: 'my_view'): RecordService<MyViewResponse>
-	collection(idOrName: 'posts'): RecordService<PostsResponse>
+	collection(idOrName: 'invoices'): RecordService<InvoicesResponse>
+	collection(idOrName: 'subscriptions'): RecordService<SubscriptionsResponse>
 	collection(idOrName: 'users'): RecordService<UsersResponse>
 }
