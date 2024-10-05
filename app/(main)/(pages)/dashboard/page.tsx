@@ -9,6 +9,7 @@ import { ArrowUpRight, DollarSign, Users, FileText, Bell } from 'lucide-react'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { StatCard } from '@/components/global/stat-card'
 import PricingPage from '../pricing/page'
+import { createBrowserClient } from '@/lib/pocketbase';
 
 // New CurrentTime component
 const CurrentTime = () => {
@@ -43,6 +44,35 @@ const chartConfig = {
 
 export default function DashboardPage() {
   const [greeting, setGreeting] = useState('')
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      // 1. Erstelle den PocketBase-Client im Browser
+      const pb = createBrowserClient();
+
+      // 2. Prüfe, ob der Benutzer authentifiziert ist
+      if (pb.authStore.isValid) {
+        const userId = pb.authStore.model?.id; // Hole die userId vom aktuellen authentifizierten Benutzer
+        
+
+        if (userId) {
+          // 3. Führe die API-Anfrage mit der userId durch
+          const response = await fetch(`/api/subscription-status?userId=${userId}`);
+          const data = await response.json();
+
+          // 4. Setze den Zustand je nach Abonnementstatus
+          setHasActiveSubscription(data.active);
+        } else {
+          console.error('User ID is not available');
+        }
+      } else {
+        console.error('User is not authenticated');
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, []);
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -91,7 +121,7 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      <PricingPage />
+    {!hasActiveSubscription && <PricingPage />}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard title="Total Revenue" value="$12,345" change={15} isPositive={true} color="#10B981" />
