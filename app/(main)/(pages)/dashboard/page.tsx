@@ -54,7 +54,7 @@ export default function DashboardPage() {
       // 2. Prüfe, ob der Benutzer authentifiziert ist
       if (pb.authStore.isValid) {
         const userId = pb.authStore.model?.id; // Hole die userId vom aktuellen authentifizierten Benutzer
-        
+
 
         if (userId) {
           // 3. Führe die API-Anfrage mit der userId durch
@@ -110,18 +110,12 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">{greeting}, User!</h1>
-          <CurrentTime />
-        </div>
-      </motion.div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold">{greeting}, User!</h1>
+        <CurrentTime />
+      </div>
 
-    {!hasActiveSubscription && <PricingPage />}
+      {!hasActiveSubscription && <PricingPage />}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard title="Total Revenue" value="$12,345" change={15} isPositive={true} color="#10B981" />
@@ -148,7 +142,7 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickFormatter={(value) => value.slice(0, 3)}
                   />
-                  <YAxis />            
+                  <YAxis />
                   <Tooltip />
                   <ChartTooltip
                     cursor={false}
@@ -191,19 +185,13 @@ export default function DashboardPage() {
           <CardContent>
             <ul className="space-y-4">
               {recentActivity.map((activity) => (
-                <motion.li
-                  key={activity.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="flex items-center space-x-4"
-                >
+                <div>
                   <Bell className="h-6 w-6 text-blue-500" />
                   <div>
                     <p className="text-sm font-medium">{activity.text}</p>
                     <p className="text-xs text-muted-foreground">{activity.time}</p>
                   </div>
-                </motion.li>
+                </div>
               ))}
             </ul>
           </CardContent>

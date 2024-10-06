@@ -1,18 +1,13 @@
 import React from 'react'
 import Sidebar from '@/components/sidebar'
 import InfoBar from '@/components/infobar'
+import Header from '@/components/header'
 
 type Props = { children: React.ReactNode }
 
 const Layout = (props: Props) => {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <div className="ml-16 w-full h-full">
-         <InfoBar />
-        {props.children}          
-      </div>
-    </div>
+    <Header children={props.children} />
   )
 }
 

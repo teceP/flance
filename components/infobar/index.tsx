@@ -147,3 +147,16 @@ const InfoBar = () => {
 };
 
 export default InfoBar;
+function Logo() {
+  return (
+    <div className="flex items-center space-x-2">
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 7.8C4 6.11984 4 5.27976 4.32698 4.63803C4.6146 4.07354 5.07354 3.6146 5.63803 3.32698C6.27976 3 7.11984 3 8.8 3H15.2C16.8802 3 17.7202 3 18.362 3.32698C18.9265 3.6146 19.3854 4.07354 19.673 4.63803C20 5.27976 20 6.11984 20 7.8V16.2C20 17.8802 20 18.7202 19.673 19.362C19.3854 19.9265 18.9265 20.3854 18.362 20.673C17.7202 21 16.8802 21 15.2 21H8.8C7.11984 21 6.27976 21 5.63803 20.673C5.07354 20.3854 4.6146 19.9265 4.32698 19.362C4 18.7202 4 17.8802 4 16.2V7.8Z" stroke="#2563EB" strokeWidth="2"/>
+        <path d="M15 8H9" stroke="#2563EB" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M13 12H9" stroke="#2563EB" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M11 16H9" stroke="#2563EB" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+      <span className="text-xl font-bold text-gray-800">Billify</span>
+    </div>
+  )
+}

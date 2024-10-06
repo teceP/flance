@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
@@ -19,20 +19,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react"
 import { Label } from '@/components/ui/label'
-import { Description } from '@radix-ui/react-dialog'
+import { createBrowserClient } from "@/lib/pocketbase"; // Import your PocketBase client creation function
+import { ClientsRecord } from '@/types/pocketbase-types'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { CreateClientDialog } from './components/create-client-dialog'
 
 const invoiceFormSchema = z.object({
     invoiceNumber: z.string().min(4, { message: "Invoice number must be at least 4 characters." }),
     issueDate: z.date({ required_error: "Issue date is required." }),
     dueDate: z.date({ required_error: "Due date is required." }),
-    client: z.string().min(1, { message: "Please select a client." }),
+    clients: z.array(z.object({
+        name: z.string().nonempty("Client's name is required."),
+        address: z.string().nonempty("Client's address is required."),
+    })),
     total: z.number().min(0, { message: "Total must be a positive number." }),
     discounts: z.array(z.object({
-        description: z.string().min(1, {message: "Discount description must be at least 1 character."}),
+        description: z.string().min(1, { message: "Discount description must be at least 1 character." }),
         amount: z.number().gt(0, { message: "Discount must be a positive number." }),
         rate: z.number().min(0, { message: "Discount must be a positive number." }),
-    }),
-    ).refine((discounts) => {
+    })).refine((discounts) => {
         const totalDiscountAmount = discounts.reduce((sum, discount) => sum + discount.rate, 0);
         return totalDiscountAmount <= 100;
     }, {
@@ -43,32 +56,31 @@ const invoiceFormSchema = z.object({
         amount: z.number().min(0, { message: "Tax amount must be a positive number." }),
     })),
     subtotal: z.number().min(0, { message: "Subtotal must be a positive number." }),
-    items: z.array(
-        z.object({
-            name: z.string().nonempty("Item name is required."),
-            description: z.string(),
-            rate: z.number().min(0, "Rate must be positive."),
-            quantity: z.number().min(1, "Quantity must be at least 1."),
-            tax: z.number({ required_error: "Tax must be a number." }).min(0, { message: "Must be more than -1." }).max(100, { message: "Tax must be less than 100." }),
-            subtotal: z.number({ required_error: "Subtotal must be a number." }),
-            total: z.number({ required_error: "Total must be a number." }),
-        })
-    ),
-})
+    items: z.array(z.object({
+        name: z.string().nonempty("Item name is required."),
+        description: z.string(),
+        rate: z.number().min(0, "Rate must be positive."),
+        quantity: z.number().min(1, "Quantity must be at least 1."),
+        tax: z.number().min(0).max(100, { message: "Tax must be between 0 and 100." }),
+        subtotal: z.number({ required_error: "Subtotal must be a number." }),
+        total: z.number({ required_error: "Total must be a number." }),
+    })),
+});
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>
+
 
 const defaultValues: Partial<InvoiceFormValues> = {
     invoiceNumber: "",
     issueDate: new Date(),
     dueDate: new Date(),
-    client: "",
+    clients: [],
     total: 0,
     discounts: [],
     tax: [{ rate: 19, amount: 0 }],
     subtotal: 0,
     items: [{ name: "", description: "", rate: 0, quantity: 0, tax: 19, subtotal: 0, total: 0 }],
-}
+};
 
 type InvoiceForm = {
     items: InvoiceItem[];
@@ -76,11 +88,34 @@ type InvoiceForm = {
 
 export default function CreatePage() {
     const [isNewClientOpen, setIsNewClientOpen] = useState(false)
-    const [clients, setClients] = useState([
-        { id: "spotify", name: "Spotify" },
-        { id: "figma", name: "Figma" },
-        { id: "slack", name: "Slack" },
-    ])
+    const [clients, setClients] = useState<ClientsRecord[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedClient, setSelectedClient] = useState<string | null>(null)
+
+    const pb = createBrowserClient(); // Use the browser client
+
+    async function fetchClients() {
+        try {
+            const currentUser = pb.authStore.model;
+            if (!currentUser) return;
+
+            const clientsList = await pb.collection('clients').getFullList<ClientsRecord>({
+                filter: `user_id = "${currentUser.id}"`,
+            });
+            console.log(clientsList)
+            setClients(clientsList);
+        } catch (error) {
+            console.error('Error fetching clients:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    useEffect(() => {
+
+
+        fetchClients();
+    }, [pb]);
+
 
     // Calculate subtotal, tax, discount, and total
     const form = useForm<InvoiceFormValues>({
@@ -91,6 +126,11 @@ export default function CreatePage() {
     function onSubmit(data: InvoiceFormValues) {
         console.log(data)
         // Handle form submission
+    }
+
+    const handleClientCreated = (clientId: string) => {
+        fetchClients()
+        setSelectedClient(clientId)
     }
 
     const { control, watch } = form
@@ -109,24 +149,24 @@ export default function CreatePage() {
     const recalculateInvoice = () => {
         const items = form.getValues("items");
         const discounts = form.getValues("discounts");
-    
+
         discounts.forEach((discountItem) => discountItem.amount = 0);  // Setze alle Rabattbeträge auf 0
-    
+
         let subtotal = 0;
         let taxes: { [key: string]: number } = {};
-    
+
         // Berechne Subtotal und Steuern für jedes Item
         items.forEach((item, index) => {
             const rate = item.rate || 0;
             const quantity = item.quantity || 0;
             const itemSubtotal = (rate * quantity); // Subtotal für das Item
             console.log("Item Index:", index, "Rate:", item.rate, "Quant:", item.quantity, "ItemSubtotal:", itemSubtotal, "Subtotal:", subtotal);
-    
+
             // Setze den Subtotal des Items
             form.setValue(`items.${index}.subtotal`, itemSubtotal);
             subtotal += itemSubtotal; // Gesamt-Subtotal
-    
-    
+
+
             // Rabattberechnung: Rabatte nacheinander anwenden
             let currentItemTotal = itemSubtotal;
             discounts.forEach((discount) => {
@@ -134,7 +174,7 @@ export default function CreatePage() {
                 currentItemTotal -= discountAmount; // Rabatt abziehen
                 discount.amount += discountAmount;  // Rabattbeträge aufsummieren
             });
-    
+
             // Steuerberechnung
             const taxRate = item.tax;
             const taxAmount = currentItemTotal * (taxRate / 100); // Steuer für das Item auf den rabattierten Betrag
@@ -143,22 +183,22 @@ export default function CreatePage() {
             } else {
                 taxes[taxRate] = taxAmount; // Neuen Steuersatz hinzufügen
             }
-    
+
             // Gesamtbetrag für das Item: rabattiertes Subtotal + Tax
             const itemTotal = currentItemTotal + taxAmount;
             form.setValue(`items.${index}.total`, itemTotal);
         });
-    
+
         // Rabattberechnung für die gesamte Rechnung
         const totalDiscountAmount = discounts.reduce((sum, discount) => sum + discount.amount, 0);
-    
+
         let totalTax = 0;
         Object.keys(taxes).forEach((taxRate) => {
             totalTax += taxes[taxRate]; // Gesamtsumme der Steuern
         });
-    
+
         const totalAmount = subtotal - totalDiscountAmount + totalTax;
-    
+
         form.setValue("subtotal", subtotal);
         form.setValue("tax", Object.keys(taxes).map(taxRate => ({
             rate: parseFloat(taxRate),
@@ -168,7 +208,7 @@ export default function CreatePage() {
     };
 
     return (
-        <div className="container mx-auto p-6">
+        <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Create New Invoice</h1>
                 <Button variant="outline" className="bg-red-500 hover:bg-red-600 text-white">
@@ -203,7 +243,13 @@ export default function CreatePage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <Label>Client</Label>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                                            <Select onValueChange={(value) => {
+                                                if (value === "new") {
+                                                    setIsNewClientOpen(true);
+                                                } else {
+                                                    field.onChange(value);
+                                                }
+                                            }} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select a client" />
@@ -211,11 +257,11 @@ export default function CreatePage() {
                                                 </FormControl>
                                                 <SelectContent>
                                                     {clients.map((client) => (
-                                                        <SelectItem key={client.id} value={client.id}>
+                                                        <SelectItem key={client.name} value={client.name}>
                                                             {client.name}
                                                         </SelectItem>
                                                     ))}
-                                                    <SelectItem value="new" onSelect={() => setIsNewClientOpen(true)}>
+                                                    <SelectItem value="new">
                                                         <Plus className="mr-2 h-4 w-4 inline-block" />
                                                         Create New Client
                                                     </SelectItem>
@@ -225,6 +271,13 @@ export default function CreatePage() {
                                         </FormItem>
                                     )}
                                 />
+
+                                <CreateClientDialog
+                                    open={isNewClientOpen}
+                                    onOpenChange={setIsNewClientOpen}
+                                    onClientCreated={handleClientCreated}
+                                />
+
                                 <FormField
                                     control={form.control}
                                     name="issueDate"
@@ -319,9 +372,8 @@ export default function CreatePage() {
                                                             const inputValue = e.target.value;
                                                             if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
                                                                 const newRate = parseFloat(inputValue) || 0;
-                                                                console.log(newRate);
-                                                                field.onChange(inputValue); // übergibt den ursprünglichen Wert zur Anzeige
-                                                                recalculateInvoice(); // Führt die Neuberechnung aus
+                                                                field.onChange(newRate); // Passes the number directly
+                                                                recalculateInvoice(); // Recalculates the invoice
                                                             }
                                                         }
                                                         }
@@ -454,9 +506,9 @@ export default function CreatePage() {
                                                 <FormItem>
                                                     <Label>Description</Label>
                                                     <FormControl>
-                                                        <Input 
-                                                        {...field} 
-                                                        placeholder='Description'
+                                                        <Input
+                                                            {...field}
+                                                            placeholder='Description'
                                                         />
                                                     </FormControl>
                                                 </FormItem>
@@ -496,7 +548,7 @@ export default function CreatePage() {
                                         </Button>
                                     </div>
                                 ))}
-                                <Button type="button" variant="outline" size="sm" onClick={() => {
+                                <Button type="button" variant="outline" onClick={() => {
                                     appendDiscount({ description: "", amount: 0, rate: 0 })
                                 }}>
                                     <Plus className="h-4 w-4 mr-2" /> Add Discount
@@ -519,13 +571,6 @@ export default function CreatePage() {
                                                     <span className="text-right">-{parseFloat(discountItem.amount).toFixed(2)}€</span>
                                                 </div>
                                             ))}
-                                            {/*                                             {form.watch("discounts") && form.watch("discounts").length >= 2 && (
-                                                <div className="flex justify-end font-bold">
-                                                    <span className="text-right mr-4">Total Discount ({form.watch("discounts").reduce((sum, discount) => sum + discount.rate, 0)}%)</span>
-                                                    <span className="text-right">${form.watch("discounts").reduce((sum, discount) => sum + discount.amount, 0)}</span>
-                                                </div>
-                                            )
-                                            }*/}
 
                                             {/* Gruppierte Steuersätze ausgeben */}
                                             {form.watch("tax")?.map((taxItem, index) => (
@@ -543,22 +588,6 @@ export default function CreatePage() {
                                     </FormItem>
                                 )}
                             />
-
-
-                            <Collapsible open={isNewClientOpen} onOpenChange={setIsNewClientOpen}>
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="outline" className="flex items-center justify-between w-full">
-                                        {isNewClientOpen ? "Cancel New Client" : "Create New Client"}
-                                        {isNewClientOpen ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
-                                    </Button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="mt-4 space-y-4">
-                                    <Input placeholder="Client Name" />
-                                    <Input placeholder="Client Email" type="email" />
-                                    <Input placeholder="Client Phone" type="tel" />
-                                    <Button type="button" onClick={() => setIsNewClientOpen(false)}>Add New Client</Button>
-                                </CollapsibleContent>
-                            </Collapsible>
 
                             <Button type="submit" className="w-full">Create Invoice</Button>
                         </form>

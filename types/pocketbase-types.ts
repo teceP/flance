@@ -6,7 +6,11 @@ import type PocketBase from 'pocketbase'
 import type { RecordService } from 'pocketbase'
 
 export enum Collections {
+	Clients = "clients",
+	InvoiceDiscounts = "invoice_discounts",
+	InvoiceItems = "invoice_items",
 	Invoices = "invoices",
+	SubscriptionProviders = "subscription_providers",
 	Subscriptions = "subscriptions",
 	Users = "users",
 }
@@ -35,34 +39,61 @@ export type AuthSystemFields<T = never> = {
 
 // Record types for each collection
 
-export type InvoicesRecord<Titems = unknown> = {
-	clientAddress?: string
-	clientName?: string
-	companyAddress?: string
-	companyName?: string
-	date?: IsoDateString
-	dueDate?: IsoDateString
-	invoiceNumber?: string
-	items?: null | Titems
+export type ClientsRecord = {
+	address?: HTMLString
+	description?: string
+	name: string
+	user_id?: RecordIdString
+}
+
+export type InvoiceDiscountsRecord = {
+	description?: string
+	rate?: number
+	user_id?: RecordIdString
+}
+
+export type InvoiceItemsRecord = {
+	description?: string
+	name?: string
+	quantity?: number
+	rate?: number
 	subtotal?: number
 	tax?: number
 	total?: number
+	user_id?: RecordIdString
 }
 
-export enum SubscriptionsIntervalOptions {
+export type InvoicesRecord = {
+	client_id?: RecordIdString
+	due_date?: IsoDateString
+	invoice_discount_ids?: RecordIdString[]
+	invoice_item_ids?: RecordIdString[]
+	invoice_number: string
+	issue_date: IsoDateString
+	subtotal?: number
+	tax?: number
+	text?: HTMLString
+	total?: number
+	user_id?: RecordIdString
+}
+
+export type SubscriptionProvidersRecord = {
+	name: string
+}
+
+export enum SubscriptionsPlanOptions {
+	"free" = "free",
 	"monthly" = "monthly",
 	"yearly" = "yearly",
 }
 export type SubscriptionsRecord = {
-	amount?: number
 	end_date?: IsoDateString
-	interval?: SubscriptionsIntervalOptions
 	next_billing_date?: IsoDateString
-	plan_id?: string
-	provider?: string
+	plan?: SubscriptionsPlanOptions
+	provider_id?: RecordIdString
 	start_date?: IsoDateString
 	status?: string
-	user_id?: RecordIdString
+	user_id: RecordIdString
 }
 
 export type UsersRecord = {
@@ -74,20 +105,32 @@ export type UsersRecord = {
 }
 
 // Response types include system fields and match responses from the PocketBase API
-export type InvoicesResponse<Titems = unknown, Texpand = unknown> = Required<InvoicesRecord<Titems>> & BaseSystemFields<Texpand>
+export type ClientsResponse<Texpand = unknown> = Required<ClientsRecord> & BaseSystemFields<Texpand>
+export type InvoiceDiscountsResponse<Texpand = unknown> = Required<InvoiceDiscountsRecord> & BaseSystemFields<Texpand>
+export type InvoiceItemsResponse<Texpand = unknown> = Required<InvoiceItemsRecord> & BaseSystemFields<Texpand>
+export type InvoicesResponse<Texpand = unknown> = Required<InvoicesRecord> & BaseSystemFields<Texpand>
+export type SubscriptionProvidersResponse<Texpand = unknown> = Required<SubscriptionProvidersRecord> & BaseSystemFields<Texpand>
 export type SubscriptionsResponse<Texpand = unknown> = Required<SubscriptionsRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
+	clients: ClientsRecord
+	invoice_discounts: InvoiceDiscountsRecord
+	invoice_items: InvoiceItemsRecord
 	invoices: InvoicesRecord
+	subscription_providers: SubscriptionProvidersRecord
 	subscriptions: SubscriptionsRecord
 	users: UsersRecord
 }
 
 export type CollectionResponses = {
+	clients: ClientsResponse
+	invoice_discounts: InvoiceDiscountsResponse
+	invoice_items: InvoiceItemsResponse
 	invoices: InvoicesResponse
+	subscription_providers: SubscriptionProvidersResponse
 	subscriptions: SubscriptionsResponse
 	users: UsersResponse
 }
@@ -96,7 +139,11 @@ export type CollectionResponses = {
 // https://github.com/pocketbase/js-sdk#specify-typescript-definitions
 
 export type TypedPocketBase = PocketBase & {
+	collection(idOrName: 'clients'): RecordService<ClientsResponse>
+	collection(idOrName: 'invoice_discounts'): RecordService<InvoiceDiscountsResponse>
+	collection(idOrName: 'invoice_items'): RecordService<InvoiceItemsResponse>
 	collection(idOrName: 'invoices'): RecordService<InvoicesResponse>
+	collection(idOrName: 'subscription_providers'): RecordService<SubscriptionProvidersResponse>
 	collection(idOrName: 'subscriptions'): RecordService<SubscriptionsResponse>
 	collection(idOrName: 'users'): RecordService<UsersResponse>
 }
