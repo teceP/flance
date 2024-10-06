@@ -10,36 +10,23 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { Label } from '@/components/ui/label'
 import { createBrowserClient } from "@/lib/pocketbase"; // Import your PocketBase client creation function
 import { ClientsRecord } from '@/types/pocketbase-types'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
+
 import { CreateClientDialog } from './components/create-client-dialog'
 
 const invoiceFormSchema = z.object({
     invoiceNumber: z.string().min(4, { message: "Invoice number must be at least 4 characters." }),
     issueDate: z.date({ required_error: "Issue date is required." }),
     dueDate: z.date({ required_error: "Due date is required." }),
-    clients: z.array(z.object({
-        name: z.string().nonempty("Client's name is required."),
-        address: z.string().nonempty("Client's address is required."),
-    })),
+    client: z.string().nonempty("Client's name is required."),
     total: z.number().min(0, { message: "Total must be a positive number." }),
     discounts: z.array(z.object({
         description: z.string().min(1, { message: "Discount description must be at least 1 character." }),
@@ -74,7 +61,7 @@ const defaultValues: Partial<InvoiceFormValues> = {
     invoiceNumber: "",
     issueDate: new Date(),
     dueDate: new Date(),
-    clients: [],
+    client: "",
     total: 0,
     discounts: [],
     tax: [{ rate: 19, amount: 0 }],
@@ -568,7 +555,7 @@ export default function CreatePage() {
                                             {form.watch("discounts")?.map((discountItem, index) => (
                                                 <div className="flex justify-end" key={index}>
                                                     <span className="text-right mr-4">Discount: ({discountItem.rate}%)</span>
-                                                    <span className="text-right">-{parseFloat(discountItem.amount).toFixed(2)}€</span>
+                                                    <span className="text-right">-{discountItem.amount.toFixed(2)}€</span>
                                                 </div>
                                             ))}
 
@@ -576,12 +563,12 @@ export default function CreatePage() {
                                             {form.watch("tax")?.map((taxItem, index) => (
                                                 <div className="flex justify-end" key={index}>
                                                     <span className="text-right mr-4">Tax ({taxItem.rate}%)</span>
-                                                    <span className="text-right">{parseFloat(taxItem.amount).toFixed(2)}€</span>
+                                                    <span className="text-right">{taxItem.amount.toFixed(2)}€</span>
                                                 </div>
                                             ))}
                                             <div className="flex justify-end font-bold">
                                                 <span className="text-right mr-4">Total Amount</span>
-                                                <span className="text-right">{form.watch("total")}€</span>
+                                                <span className="text-right">{form.watch("total").toFixed(2)}€</span>
                                             </div>
                                         </div>
                                         <FormMessage />
