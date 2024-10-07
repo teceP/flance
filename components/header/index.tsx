@@ -1,13 +1,14 @@
 "use client"
 
 import React, { useState } from 'react';
-import { CreditCard, Heart, LogOut, Menu, Search, LayoutGrid, Users, FileText, Clock, BarChart3, User, Settings, FilePlus2 } from 'lucide-react'
+import { CreditCard, Heart, LogOut, Menu, Search, LayoutGrid, Users, FileText, Clock, BarChart3, User, Settings, FilePlus2, MoreVertical, HelpingHand } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { usePathname, useRouter } from 'next/navigation'
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from '../ui/menubar';
 import { createBrowserClient } from '@/lib/pocketbase';
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
+import { DropdownMenu, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 interface LayoutProps {
     children: React.ReactNode
@@ -59,7 +60,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
                 <header className="bg-white shadow-sm z-10">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6">
                         <div className="flex items-center justify-between h-16">
                             <div className="w-48">
                                 <Button variant="ghost" size="icon" className="md:hidden">
@@ -67,7 +68,7 @@ export default function Layout({ children }: LayoutProps) {
                                 </Button>
                             </div>
                             <div className="flex-1 flex items-center justify-center">
-                                <div className="max-w-lg w-full">
+                                <div className="max-w-lg" style={{ transform: 'translateX(-50px)' }}> {/* Shifted left using translateX */}
                                     <label htmlFor="search" className="sr-only">Search</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -76,43 +77,37 @@ export default function Layout({ children }: LayoutProps) {
                                         <Input
                                             type="search"
                                             id="search"
-                                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                            className="block pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                             placeholder="Search"
                                             onClick={() => setOpen(true)}
                                         />
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-48 flex justify-end">
+                            <div className=" flex justify-end">
                                 <Menubar>
                                     <MenubarMenu>
-                                        <MenubarTrigger className="font-semibold">Account</MenubarTrigger>
+                                        <MenubarTrigger className=''>
+                                            {/* <span>Menu</span>*/}
+                                            <Heart className="h-5 w-5 text-red-500" />
+                                            {/*<MoreVertical className="h-5 w-5" /> */}
+                                        </MenubarTrigger>
                                         <MenubarContent>
                                             <MenubarItem className="flex items-center">
-                                                <User className="mr-2 h-4 w-4 text-blue-500" />
-                                                Profile
-                                            </MenubarItem>
-                                            <MenubarItem className="flex items-center">
                                                 <CreditCard className="mr-2 h-4 w-4 text-green-500" />
-                                                Billing
+                                                <span>Billing</span>
                                             </MenubarItem>
-                                            <MenubarItem className="flex items-center">
-                                                <Settings className="mr-2 h-4 w-4 text-orange-500" />
-                                                Settings
-                                            </MenubarItem>
-                                            <MenubarSeparator />
-                                            <MenubarItem className="flex items-center">
-                                                <Users className="mr-2 h-4 w-4 text-purple-500" />
-                                                Manage Family
-                                            </MenubarItem>
-                                            <MenubarSeparator />
                                             <MenubarItem className="flex items-center">
                                                 <Heart className="mr-2 h-4 w-4 text-red-500" />
-                                                Donate
+                                                <span>Donate</span>
+                                            </MenubarItem>
+                                            <MenubarItem className="flex items-center">
+                                                <HelpingHand className="mr-2 h-4 w-4 text-purple-500" />
+                                                Help & Support
                                             </MenubarItem>
                                             <MenubarItem className="flex items-center" onClick={handleLogout}>
                                                 <LogOut className="mr-2 h-4 w-4 text-gray-500" />
-                                                Log out
+                                                <span>Log out</span>
                                             </MenubarItem>
                                         </MenubarContent>
                                     </MenubarMenu>

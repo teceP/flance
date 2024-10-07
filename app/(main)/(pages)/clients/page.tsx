@@ -11,6 +11,7 @@ import { StatCard } from '@/components/global/stat-card'
 import { StaticDropdownMenu } from '@/components/global/static-dropdown-menu'
 import { NewInvoiceSheet } from '@/components/forms/new-invoice-sheet'
 import { NewClientSheet } from '@/components/forms/new-client-sheet'
+import { CreateClientDialog } from '../create/components/create-client-dialog'
 
 export default function ClientsPage() {
     const [clients, setClients] = useState([
