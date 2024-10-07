@@ -15,16 +15,17 @@ interface LayoutProps {
 }
 
 const navItems = [
-    { icon: LayoutGrid, href: '/dashboard', label: 'Dashboard' },
-    { icon: FilePlus2, href: '/create', label: 'Create' },
-    { icon: FileText, href: '/invoices', label: 'Invoices' },
-    { icon: Users, href: '/clients', label: 'Clients' },
-    { icon: Clock, href: '/history', label: 'History' },
-    { icon: BarChart3, href: '/analytics', label: 'Analytics' },
+    { icon: LayoutGrid, href: '/dashboard', label: 'Dashboard', headline: "Dashboard" },
+    { icon: FilePlus2, href: '/create', label: 'Create', headline: 'Create an Invoice' },
+    { icon: FileText, href: '/invoices', label: 'Invoices', headline: 'Invoices' },
+    { icon: Users, href: '/clients', label: 'Clients', headline: 'Clients' },
+    { icon: Clock, href: '/history', label: 'History', headline: 'History' },
+    { icon: BarChart3, href: '/analytics', label: 'Analytics', headline: 'Analytics' },
 ]
 
 export default function Layout({ children }: LayoutProps) {
     const pathname = usePathname()
+    const headline = 'Billify. | ' + navItems.filter((e) => e.href === pathname)[0].headline
     const router = useRouter()
     const pb = createBrowserClient();
     const [open, setOpen] = useState(false);
@@ -60,15 +61,25 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
                 <header className="bg-white shadow-sm z-10">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                        <div className="flex items-center justify-between h-16">
+                    <title>{headline}</title>
+
+                    <div className="px-4">
+                        <div className="flex h-16">
+
+                            {/* Left side: Page title
+                            <div className="flex items-center space-x-4">
+                                <h2 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight first:mt-0">
+                                    {headline}
+                                </h2>
+                            </div> */}
+
                             <div className="w-48">
                                 <Button variant="ghost" size="icon" className="md:hidden">
                                     <Menu className="h-6 w-6" />
                                 </Button>
                             </div>
                             <div className="flex-1 flex items-center justify-center">
-                                <div className="max-w-lg" style={{ transform: 'translateX(-50px)' }}> {/* Shifted left using translateX */}
+                                <div className=" " style={{ transform: 'translateX(-50px)' }}> {/* Shifted left using translateX */}
                                     <label htmlFor="search" className="sr-only">Search</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -154,7 +165,7 @@ function Logo() {
                 <path d="M13 12H9" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
                 <path d="M11 16H9" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            <span className="text-xl font-bold text-gray-800">Billify</span>
+            <span className="text-xl font-bold text-gray-800">Billify.</span>
         </div>
     )
 }

@@ -38,3 +38,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 \\wsl.localhost\docker-desktop-data\data\docker\volumes\62b900caae40e98afab99a57a2e9b34ab4d7bba7ca2bedaed449ad39682c1f76\_data
+
+
+npx pocketbase-typegen --db \\wsl.localhost\docker-desktop-data\data\docker\volumes\62b900caae40e98afab99a57a2e9b34ab4d7bba7ca2bedaed449ad39682c1f76\_data\data.db --out types\pocketbase-types.ts

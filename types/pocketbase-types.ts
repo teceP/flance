@@ -63,18 +63,27 @@ export type InvoiceItemsRecord = {
 	user_id?: RecordIdString
 }
 
+export enum InvoicesStatusOptions {
+	"not_sent" = "not_sent",
+	"sent" = "sent",
+	"paid" = "paid",
+	"canceled" = "canceled",
+}
 export type InvoicesRecord = {
 	client_id?: RecordIdString
 	due_date?: IsoDateString
+	footer?: string
 	invoice_discount_ids?: RecordIdString[]
 	invoice_item_ids?: RecordIdString[]
 	invoice_number: string
+	is_draft?: boolean
 	issue_date: IsoDateString
+	status: InvoicesStatusOptions
 	subtotal?: number
 	tax?: number
 	text?: HTMLString
 	total?: number
-	user_id?: RecordIdString
+	user_id: RecordIdString
 }
 
 export type SubscriptionProvidersRecord = {
