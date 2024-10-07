@@ -1,26 +1,152 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
-import { z } from "zod"
+import * as z from "zod"
+import { PDFViewer, Document, Page, View, Text, StyleSheet, Font, Svg, Path } from '@react-pdf/renderer';
 import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
     FormField,
     FormItem,
+    FormLabel,
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, X } from "lucide-react"
-import { Label } from '@/components/ui/label'
-import { createBrowserClient } from "@/lib/pocketbase"; // Import your PocketBase client creation function
+import { Calendar, DollarSign, FileText, MoreHorizontal, Plus, Trash2, X } from "lucide-react"
+import { createBrowserClient } from "@/lib/pocketbase";
 import { ClientsRecord } from '@/types/pocketbase-types'
 
-import { CreateClientDialog } from './components/create-client-dialog'
+import { CreateClientDialog } from '../create/components/create-client-dialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+// Register custom fonts (as in your original code)
+Font.register({
+    family: 'Roboto',
+    fonts: [
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf', fontWeight: 300 },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', fontWeight: 400 },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-medium-webfont.ttf', fontWeight: 500 },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 700 },
+    ],
+});
+
+// PDF styles (as in your original code)
+const styles = StyleSheet.create({
+    page: {
+        flexDirection: 'column',
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        fontFamily: 'Roboto',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 40,
+    },
+    logo: {
+        fontSize: 24,
+        fontWeight: 700,
+        color: '#3B82F6',
+    },
+    invoiceInfo: {
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+    },
+    invoiceTitle: {
+        fontSize: 32,
+        fontWeight: 700,
+        color: '#1F2937',
+        marginBottom: 8,
+    },
+    invoiceDetails: {
+        fontSize: 12,
+        color: '#6B7280',
+    },
+    section: {
+        marginBottom: 20,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 500,
+        color: '#1F2937',
+        marginBottom: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+        paddingBottom: 5,
+    },
+    table: {
+        flexDirection: 'column',
+    },
+    tableHeader: {
+        flexDirection: 'row',
+        backgroundColor: '#F3F4F6',
+        padding: 8,
+        fontWeight: 500,
+        fontSize: 12,
+        color: '#374151',
+    },
+    tableRow: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+        padding: 8,
+        fontSize: 12,
+        color: '#4B5563',
+    },
+    tableCell: {
+        flex: 1,
+    },
+    summarySection: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 20,
+    },
+    summaryTable: {
+        width: '50%',
+    },
+    summaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 4,
+        fontSize: 12,
+        color: '#4B5563',
+    },
+    summaryTotal: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 4,
+        fontSize: 14,
+        fontWeight: 700,
+        color: '#1F2937',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+        marginTop: 8,
+    },
+    footer: {
+        marginTop: 40,
+        fontSize: 12,
+        color: '#6B7280',
+        textAlign: 'center',
+    },
+    watermark: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    watermarkText: {
+        fontSize: 60,
+        color: 'lightgrey',
+        opacity: 0.5,
+    },
+});
 
 const invoiceFormSchema = z.object({
     invoiceNumber: z.string().min(4, { message: "Invoice number must be at least 4 characters." }),
@@ -56,7 +182,6 @@ const invoiceFormSchema = z.object({
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>
 
-
 const defaultValues: Partial<InvoiceFormValues> = {
     invoiceNumber: "",
     issueDate: new Date(),
@@ -69,17 +194,28 @@ const defaultValues: Partial<InvoiceFormValues> = {
     items: [{ name: "", description: "", rate: 0, quantity: 0, tax: 19, subtotal: 0, total: 0 }],
 };
 
-type InvoiceForm = {
-    items: InvoiceItem[];
-};
-
-export default function CreatePage() {
-    const [isNewClientOpen, setIsNewClientOpen] = useState(false)
+export default function CreateInvoicePage() {
+    const [isNewClientOpen, setIsNewClientOpen] = useState(false);
     const [clients, setClients] = useState<ClientsRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedClient, setSelectedClient] = useState<string | null>(null)
+    const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
-    const pb = createBrowserClient(); // Use the browser client
+    const pb = createBrowserClient();
+
+    const form = useForm<InvoiceFormValues>({
+        resolver: zodResolver(invoiceFormSchema),
+        defaultValues,
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "items",
+    });
+
+    const { fields: discountFields, append: appendDiscount, remove: removeDiscount } = useFieldArray({
+        control: form.control,
+        name: "discounts",
+    });
 
     async function fetchClients() {
         try {
@@ -89,7 +225,6 @@ export default function CreatePage() {
             const clientsList = await pb.collection('clients').getFullList<ClientsRecord>({
                 filter: `user_id = "${currentUser.id}"`,
             });
-            console.log(clientsList)
             setClients(clientsList);
         } catch (error) {
             console.error('Error fetching clients:', error);
@@ -97,91 +232,57 @@ export default function CreatePage() {
             setLoading(false);
         }
     }
+
     useEffect(() => {
-
-
         fetchClients();
-    }, [pb]);
-
-
-    // Calculate subtotal, tax, discount, and total
-    const form = useForm<InvoiceFormValues>({
-        resolver: zodResolver(invoiceFormSchema),
-        defaultValues,
-    })
-
-    function onSubmit(data: InvoiceFormValues) {
-        console.log(data)
-        // Handle form submission
-    }
+    }, []);
 
     const handleClientCreated = (clientId: string) => {
-        fetchClients()
-        setSelectedClient(clientId)
-    }
-
-    const { control, watch } = form
-
-    // Manage the dynamic items array with useFieldArray
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "items", // Must match schema field
-    })
-
-    const { fields: discountFields, append: appendDiscount, remove: removeDiscount } = useFieldArray({
-        control: form.control,
-        name: "discounts",
-    })
+        fetchClients();
+        setSelectedClient(clientId);
+    };
 
     const recalculateInvoice = () => {
         const items = form.getValues("items");
         const discounts = form.getValues("discounts");
 
-        discounts.forEach((discountItem) => discountItem.amount = 0);  // Setze alle Rabattbeträge auf 0
+        discounts.forEach((discountItem) => discountItem.amount = 0);
 
         let subtotal = 0;
         let taxes: { [key: string]: number } = {};
 
-        // Berechne Subtotal und Steuern für jedes Item
         items.forEach((item, index) => {
             const rate = item.rate || 0;
             const quantity = item.quantity || 0;
-            const itemSubtotal = (rate * quantity); // Subtotal für das Item
-            console.log("Item Index:", index, "Rate:", item.rate, "Quant:", item.quantity, "ItemSubtotal:", itemSubtotal, "Subtotal:", subtotal);
+            const itemSubtotal = (rate * quantity);
 
-            // Setze den Subtotal des Items
             form.setValue(`items.${index}.subtotal`, itemSubtotal);
-            subtotal += itemSubtotal; // Gesamt-Subtotal
+            subtotal += itemSubtotal;
 
-
-            // Rabattberechnung: Rabatte nacheinander anwenden
             let currentItemTotal = itemSubtotal;
             discounts.forEach((discount) => {
-                const discountAmount = currentItemTotal * (discount.rate / 100); // Rabatt auf den aktuellen Betrag
-                currentItemTotal -= discountAmount; // Rabatt abziehen
-                discount.amount += discountAmount;  // Rabattbeträge aufsummieren
+                const discountAmount = currentItemTotal * (discount.rate / 100);
+                currentItemTotal -= discountAmount;
+                discount.amount += discountAmount;
             });
 
-            // Steuerberechnung
             const taxRate = item.tax;
-            const taxAmount = currentItemTotal * (taxRate / 100); // Steuer für das Item auf den rabattierten Betrag
+            const taxAmount = currentItemTotal * (taxRate / 100);
             if (taxes[taxRate]) {
-                taxes[taxRate] += taxAmount; // Bestehenden Steuersatz aktualisieren
+                taxes[taxRate] += taxAmount;
             } else {
-                taxes[taxRate] = taxAmount; // Neuen Steuersatz hinzufügen
+                taxes[taxRate] = taxAmount;
             }
 
-            // Gesamtbetrag für das Item: rabattiertes Subtotal + Tax
             const itemTotal = currentItemTotal + taxAmount;
             form.setValue(`items.${index}.total`, itemTotal);
         });
 
-        // Rabattberechnung für die gesamte Rechnung
         const totalDiscountAmount = discounts.reduce((sum, discount) => sum + discount.amount, 0);
 
         let totalTax = 0;
         Object.keys(taxes).forEach((taxRate) => {
-            totalTax += taxes[taxRate]; // Gesamtsumme der Steuern
+            totalTax += taxes[taxRate];
         });
 
         const totalAmount = subtotal - totalDiscountAmount + totalTax;
@@ -194,393 +295,526 @@ export default function CreatePage() {
         form.setValue("total", totalAmount);
     };
 
+    function onSubmit(data: InvoiceFormValues) {
+        console.log(data);
+        // Handle form submission
+    }
+
+    const hasPreviewData = form.watch("items").length > 0 || form.watch("client") !== "";
+
     return (
-        <div>
+        <div className="container mx-auto p-4">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Create New Invoice</h1>
-                <Button variant="outline" className="bg-red-500 hover:bg-red-600 text-white">
-                    Cancel
-                </Button>
+                {/*<div className="space-x-2">
+                    <Button variant="outline">Cancel</Button>
+                    <Button variant="outline">Create Draft</Button>
+                    <Button type="submit" form="invoice-form">Create Invoice</Button>
+                </div>*/}
             </div>
 
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle className='text-lg font-semibold mb-2'>Invoice Details</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="flex gap-6">
+                <div className="w-2/3">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField
-                                    control={form.control}
-                                    name="invoiceNumber"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <Label>Invoice Number</Label>
-                                            <FormControl>
-                                                <Input placeholder="INV-0001" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="client"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <Label>Client</Label>
-                                            <Select onValueChange={(value) => {
-                                                if (value === "new") {
-                                                    setIsNewClientOpen(true);
-                                                } else {
-                                                    field.onChange(value);
-                                                }
-                                            }} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a client" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {clients.map((client) => (
-                                                        <SelectItem key={client.name} value={client.name}>
-                                                            {client.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                    <SelectItem value="new">
-                                                        <Plus className="mr-2 h-4 w-4 inline-block" />
-                                                        Create New Client
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <CreateClientDialog
-                                    open={isNewClientOpen}
-                                    onOpenChange={setIsNewClientOpen}
-                                    onClientCreated={handleClientCreated}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="issueDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <Label>Issue Date</Label>
-                                            <FormControl>
-                                                <Input
-                                                    type="date"
-                                                    {...field}
-                                                    value={field.value ? field.value.toISOString().split('T')[0] : ""}
-                                                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="dueDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <Label>Due Date</Label>
-                                            <FormControl>
-                                                <Input
-                                                    type="date"
-                                                    {...field}
-                                                    value={field.value ? field.value.toISOString().split('T')[0] : ""}
-                                                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <div>
-                                </div>
-                            </div>
-
-                            <h3 className="text-lg font-semibold mb-2">Items</h3>
-                            {/* Dynamic Items List */}
-                            {fields.map((item, index) => (
-                                <div key={item.id} className="flex items-start space-x-2 mb-2">
-                                    {/* Item Name */}
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.name`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Label>Name</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        placeholder="Name"
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.description`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Label>Description</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        placeholder="Description"
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Item Rate */}
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.rate`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Label>Rate</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        type="number"
-                                                        placeholder="Rate"
-                                                        onChange={(e) => {
-                                                            const inputValue = e.target.value;
-                                                            if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
-                                                                const newRate = parseFloat(inputValue) || 0;
-                                                                field.onChange(newRate); // Passes the number directly
-                                                                recalculateInvoice(); // Recalculates the invoice
-                                                            }
-                                                        }
-                                                        }
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Item Quantity */}
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.quantity`}
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <Label>Quantity</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        type="number"
-                                                        placeholder="Quantity"
-                                                        onChange={(e) => {
-                                                            if ((parseInt(e.target.value) || 0) >= 0) {
-                                                                const newQuantity = parseInt(e.target.value) || 0; // Quantity als Zahl
-                                                                console.log(newQuantity)
-                                                                field.onChange(newQuantity); // Aktualisiere den Quantity-Wert          
-                                                                recalculateInvoice()
-                                                            }
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Item Tax */}
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.tax`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Label>Tax</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        type="number"
-                                                        placeholder="Tax"
-                                                        step="0.01"
-                                                        onChange={(e) => {
-                                                            const inputValue = e.target.value;
-                                                            if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
-                                                                const newTax = parseFloat(inputValue) || 0;
-                                                                console.log(newTax);
-                                                                field.onChange(inputValue); // übergibt den ursprünglichen Wert zur Anzeige
-                                                                recalculateInvoice(); // Führt die Neuberechnung aus
-                                                            }
-                                                        }
-                                                        }
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.subtotal`} // total wird nicht explizit im Schema benötigt
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Label>Subtotal</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        readOnly
-                                                        className="text-gray-400"
-                                                        type="text" // Typ kann "text" sein, da der Wert als formatierter String angezeigt wird
-                                                        value={`$${(field.value)}`} // Dynamische Berechnung
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`items.${index}.total`} // total wird nicht explizit im Schema benötigt
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Label>Total</Label>
-                                                <FormControl>
-                                                    <Input
-                                                        readOnly
-                                                        className="text-gray-400"
-                                                        type="text" // Typ kann "text" sein, da der Wert als formatierter String angezeigt wird
-                                                        value={`$${(field.value)}`} // Dynamische Berechnung
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Remove Item Button */}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => remove(index)}
-                                    >
-                                        <X className="h-4 w-4" />
-                                        <span className="sr-only">Remove item</span>
-                                    </Button>
-                                </div>
-                            ))}
-
-                            {/* Add New Item Button */}
-                            <Button type='button' variant="outline" onClick={() => append({ name: "", description: "", rate: 0, quantity: 0, tax: 19, subtotal: 0, total: 0 })}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Item
-                            </Button>
-                            <div>
-                                <h3 className="text-lg font-semibold mb-2">Discounts</h3>
-                                {discountFields.map((field, index) => (
-                                    <div key={field.id} className="flex items-end space-x-2 mb-2">
+                        <form id="invoice-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h3 className="text-lg font-semibold mb-4">Generals</h3>
+                                    <div className="grid grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
-                                            name={`discounts.${index}.description`}
+                                            name="invoiceNumber"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <Label>Description</Label>
+                                                    <FormLabel>Invoice Number</FormLabel>
                                                     <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder='Description'
-                                                        />
+                                                        <Input placeholder="INV-0001" {...field} />
                                                     </FormControl>
+                                                    <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                         <FormField
                                             control={form.control}
-                                            name={`discounts.${index}.rate`}
+                                            name="client"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <Label>Rate in %</Label>
-                                                    <FormControl>
-                                                        <Input
-                                                            type="number"
-                                                            {...field}
-                                                            step="0.01"
-                                                            onChange={(e) => {
-                                                                const inputValue = e.target.value;
-                                                                if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
-                                                                    const newTax = parseFloat(inputValue) || 0;
-                                                                    console.log(newTax);
-                                                                    field.onChange(inputValue);
-                                                                    recalculateInvoice();
-                                                                }
-                                                            }
-                                                            }
-                                                        />
-                                                    </FormControl>
+                                                    <FormLabel>Client</FormLabel>
+                                                    <Select onValueChange={(value) => {
+                                                        if (value === "new") {
+                                                            setIsNewClientOpen(true);
+                                                        } else {
+                                                            field.onChange(value);
+                                                        }
+                                                    }} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select a client" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {clients.map((client) => (
+                                                                <SelectItem key={client.name} value={client.name}>
+                                                                    {client.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                            <SelectItem value="new">
+                                                                <Plus className="mr-2 h-4 w-4 inline-block" />
+                                                                Create New Client
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
-                                        <Button type="button" variant="outline" size="icon" onClick={() => {
-                                            removeDiscount(index)
-                                            recalculateInvoice()
-                                        }}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
+                                        <FormField
+                                            control={form.control}
+                                            name="issueDate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Issue Date</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="date"
+                                                            {...field}
+                                                            value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                                                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dueDate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Due Date</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="date"
+                                                            {...field}
+                                                            value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                                                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
-                                ))}
-                                <Button type="button" variant="outline" onClick={() => {
-                                    appendDiscount({ description: "", amount: 0, rate: 0 })
-                                }}>
-                                    <Plus className="h-4 w-4 mr-2" /> Add Discount
-                                </Button>
-                            </div>
-                            <FormField
-                                control={form.control}
-                                name="total"
-                                render={({ }) => (
-                                    <FormItem>
-                                        <div className="flex-1 space-y-2 text-right">
-                                            <div className="flex justify-end font-bold">
-                                                <span className="text-right mr-4">Subtotal</span>
-                                                <span className="text-right">{(form.watch("subtotal") || 0).toFixed(2)}€</span>
-                                            </div>
-                                            {/* Gruppierte Steuersätze ausgeben */}
-                                            {form.watch("discounts")?.map((discountItem, index) => (
-                                                <div className="flex justify-end" key={index}>
-                                                    <span className="text-right mr-4">Discount: ({discountItem.rate}%)</span>
-                                                    <span className="text-right">-{discountItem.amount.toFixed(2)}€</span>
-                                                </div>
-                                            ))}
+                                </CardContent>
+                            </Card>
 
-                                            {/* Gruppierte Steuersätze ausgeben */}
-                                            {form.watch("tax")?.map((taxItem, index) => (
-                                                <div className="flex justify-end" key={index}>
-                                                    <span className="text-right mr-4">Tax ({taxItem.rate}%)</span>
-                                                    <span className="text-right">{taxItem.amount.toFixed(2)}€</span>
-                                                </div>
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h3 className="text-lg font-semibold mb-4">Items</h3>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead>Rate</TableHead>
+                                                <TableHead>Quantity</TableHead>
+                                                <TableHead>Tax</TableHead>
+                                                <TableHead>Total</TableHead>
+                                                <TableHead></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {fields.map((item, index) => (
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`items.${index}.name`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input {...field} placeholder="Name" />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`items.${index}.description`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input {...field} placeholder="Description" />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`items.${index}.rate`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                            type="number"
+                                                                            placeholder="Rate"
+                                                                            onChange={(e) => {
+                                                                                const inputValue = e.target.value;
+                                                                                if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
+                                                                                    const newRate = parseFloat(inputValue) || 0;
+                                                                                    field.onChange(newRate);
+                                                                                    recalculateInvoice();
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`items.${index}.quantity`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                            type="number"
+                                                                            placeholder="Quantity"
+                                                                            onChange={(e) => {
+                                                                                const newQuantity = parseInt(e.target.value) || 0;
+                                                                                field.onChange(newQuantity);
+                                                                                recalculateInvoice();
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`items.${index}.tax`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                            type="number"
+                                                                            placeholder="Tax"
+                                                                            step="0.01"
+                                                                            onChange={(e) => {
+                                                                                const inputValue = e.target.value;
+                                                                                if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
+                                                                                    field.onChange(parseFloat(inputValue) || 0);
+                                                                                    recalculateInvoice();
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        {form.watch(`items.${index}.total`).toFixed(2)}€
+                                                    </TableCell>
+                                                    {/* Other table cells for description, rate, quantity, tax, and total remain unchanged */}
+                                                    <TableCell className="align-top">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => remove(index)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                            <span className="sr-only">Remove item</span>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
                                             ))}
-                                            <div className="flex justify-end font-bold">
-                                                <span className="text-right mr-4">Total Amount</span>
-                                                <span className="text-right">{form.watch("total").toFixed(2)}€</span>
-                                            </div>
+                                        </TableBody>
+                                    </Table>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => append({ name: "", description: "", rate: 0, quantity: 0, tax: 19, subtotal: 0, total: 0 })}
+                                        className="mt-4"
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Add Item
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h3 className="text-lg font-semibold mb-4">Discounts</h3>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead>Rate (%)</TableHead>
+                                                <TableHead>Amount</TableHead>
+                                                <TableHead></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {discountFields.map((field, index) => (
+                                                <TableRow key={field.id}>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`discounts.${index}.description`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input {...field} placeholder="Description" />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`discounts.${index}.rate`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            onChange={(e) => {
+                                                                                const inputValue = e.target.value;
+                                                                                if (/^\d*\.?\d*$/.test(inputValue) || inputValue === "") {
+                                                                                    field.onChange(parseFloat(inputValue) || 0);
+                                                                                    recalculateInvoice();
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        {form.watch(`discounts.${index}.amount`).toFixed(2)}€
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                removeDiscount(index);
+                                                                recalculateInvoice();
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                            <span className="sr-only">Remove discount</span>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => appendDiscount({ description: "", amount: 0, rate: 0 })}
+                                        className="mt-4"
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" /> Add Discount
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="space-y-2 text-right">
+                                        <div className="flex justify-end font-bold">
+                                            <span className="mr-4">Subtotal</span>
+                                            <span>{form.watch("subtotal").toFixed(2)}€</span>
                                         </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <Button type="submit" className="w-full">Create Invoice</Button>
+                                        {form.watch("discounts")?.map((discountItem, index) => (
+                                            <div key={index} className="flex justify-end">
+                                                <span className="mr-4">Discount: ({discountItem.rate}%)</span>
+                                                <span>-{discountItem.amount.toFixed(2)}€</span>
+                                            </div>
+                                        ))}
+                                        {form.watch("tax")?.map((taxItem, index) => (
+                                            <div key={index} className="flex justify-end">
+                                                <span className="mr-4">Tax ({taxItem.rate}%)</span>
+                                                <span>{taxItem.amount.toFixed(2)}€</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-end font-bold">
+                                            <span className="mr-4">Total Amount</span>
+                                            <span>{form.watch("total").toFixed(2)}€</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </form>
                     </Form>
-                </CardContent>
-            </Card>
+                </div>
+
+                <div className="w-1/3">
+                    <div className="sticky top-4 space-y-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex space-x-2">
+                                <Button variant="outline" size="sm">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Save as Draft
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    Mark as Paid
+                                </Button>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button type="submit" form="invoice-form">Create Invoice</Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onSelect={() => console.log("Create Draft")}>
+                                            Create Draft
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => console.log("Cancel")}>
+                                            Cancel
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                        <Card>
+                            <CardContent className="p-6">
+                                <h3 className="text-lg font-semibold mb-4">Preview</h3>
+                                {hasPreviewData ? (
+                                    <PDFViewer style={{ width: '100%', height: 'calc(100vh - 12rem)' }} showToolbar={false}>
+                                        <Document>
+                                            <Page size="A4" style={styles.page}>
+                                                {/* Watermark */}
+                                                <Svg style={styles.watermark}>
+                                                    <Path
+                                                        d="M50,50 L150,150 M100,50 L200,150 M150,50 L250,150"
+                                                        stroke="lightgrey"
+                                                        strokeWidth={2}
+                                                    />
+                                                    <Text
+                                                        style={styles.watermarkText}
+                                                        transform="rotate(-45 150,150)"
+                                                    >
+                                                        PREVIEW
+                                                    </Text>
+                                                </Svg>
+
+                                                <View style={styles.header}>
+                                                    <Text style={styles.logo}>ACME Inc.</Text>
+                                                    <View style={styles.invoiceInfo}>
+                                                        <Text style={styles.invoiceTitle}>RECHNUNG</Text>
+                                                        <Text style={styles.invoiceDetails}>Rechnungsnummer: {form.watch("invoiceNumber")}</Text>
+                                                        <Text style={styles.invoiceDetails}>Ausstellungsdatum: {form.watch("issueDate")?.toLocaleDateString()}</Text>
+                                                        <Text style={styles.invoiceDetails}>Fälligkeitsdatum: {form.watch("dueDate")?.toLocaleDateString()}</Text>
+                                                    </View>
+                                                </View>
+
+                                                <View style={styles.section}>
+                                                    <Text style={styles.sectionTitle}>Kundeninformationen</Text>
+                                                    <Text>{form.watch("client")}</Text>
+                                                </View>
+
+                                                <View style={styles.section}>
+                                                    <Text style={styles.sectionTitle}>Positionen</Text>
+                                                    <View style={styles.table}>
+                                                        <View style={styles.tableHeader}>
+                                                            <Text style={styles.tableCell}>Produkt</Text>
+                                                            <Text style={styles.tableCell}>Menge</Text>
+                                                            <Text style={styles.tableCell}>Einzelpreis</Text>
+                                                            <Text style={styles.tableCell}>Gesamt</Text>
+                                                        </View>
+                                                        {form.watch("items").map((item, index) => (
+                                                            <View key={index} style={styles.tableRow}>
+                                                                <Text style={styles.tableCell}>{item.name}</Text>
+                                                                <Text style={styles.tableCell}>{item.quantity}</Text>
+                                                                <Text style={styles.tableCell}>{item.rate.toFixed(2)} €</Text>
+                                                                <Text style={styles.tableCell}>{item.total.toFixed(2)} €</Text>
+                                                            </View>
+                                                        ))}
+                                                    </View>
+                                                </View>
+
+                                                <View style={styles.summarySection}>
+                                                    <View style={styles.summaryTable}>
+                                                        <View style={styles.summaryRow}>
+                                                            <Text>Zwischensumme</Text>
+                                                            <Text>{form.watch("subtotal").toFixed(2)} €</Text>
+                                                        </View>
+                                                        {form.watch("discounts").map((discount, index) => (
+                                                            <View key={index} style={styles.summaryRow}>
+                                                                <Text>Rabatt ({discount.description})</Text>
+                                                                <Text>-{discount.amount.toFixed(2)} €</Text>
+                                                            </View>
+                                                        ))}
+                                                        {form.watch("tax").map((tax, index) => (
+                                                            <View key={index} style={styles.summaryRow}>
+                                                                <Text>MwSt. ({tax.rate}%)</Text>
+                                                                <Text>{tax.amount.toFixed(2)} €</Text>
+                                                            </View>
+                                                        ))}
+                                                        <View style={styles.summaryTotal}>
+                                                            <Text>Gesamtbetrag</Text>
+                                                            <Text>{form.watch("total").toFixed(2)} €</Text>
+                                                        </View>
+                                                    </View>
+                                                </View>
+
+                                                <Text style={styles.footer}>
+                                                    Vielen Dank für Ihr Vertrauen. Bei Fragen stehen wir Ihnen gerne zur Verfügung.
+                                                </Text>
+                                            </Page>
+                                        </Document>
+                                    </PDFViewer>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] bg-muted/50 rounded-lg">
+                                        <Calendar className="w-12 h-12 text-muted-foreground mb-4" />
+                                        <p className="text-muted-foreground text-center">
+                                            Your invoice preview will appear here as you add items and details.
+                                        </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+
+            <CreateClientDialog
+                open={isNewClientOpen}
+                onOpenChange={setIsNewClientOpen}
+                onClientCreated={handleClientCreated}
+            />
         </div>
-    )
+    );
 }
