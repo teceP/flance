@@ -7,14 +7,13 @@ import { createServerClient } from "@/lib/pocketbase";
 // If auth is not valid for matching routes
 // Redirect to a redirect path
 export function middleware(request: NextRequest) {
-  const redirect_path = "https://localhost:3000/signin";
-
+  const redirect_path = "/signin";
   const cookieStore = cookies();
 
   const { authStore } = createServerClient(cookieStore);
 
   if (!authStore.isValid) {
-    return NextResponse.redirect(redirect_path);
+    return NextResponse.redirect(redirect_path); // Redirect ohne Host-Angabe
   } else {
   }
 }
